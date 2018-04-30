@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Entropy</title>
+        <script src="assets/jquery.min.js"></script>
+        <style>
+            @font-face {
+                font-family: "Open Sans", sans-serif;
+                src: url(assets/OpenSans-Regular.ttf) format("truetype");
+            }
+            body {
+                margin: 30px;
+                background-color: #f0f0f0;
+            }
+            p, div, input{
+                font-family: "Open Sans", sans-serif;
+            }
+            .clearfix{
+                clear: both;
+                float: none;
+                margin-bottom: 20px;
+            }
+            .container, .backdrop, textarea, .backdrop2, .txtarea input  {
+                width: 460px;
+                height: 180px;
+            }
+            .container2, .backdrop2, .txtarea input  {
+                width: 460px;
+                height: 20px;
+            }
+            .highlights, textarea, .txtarea input {
+                padding: 10px;
+                font: 16px/18px 'Open Sans', sans-serif;
+                letter-spacing: 1px;
+            }
+            .container,.container2 {
+                display: block;
+                margin: 0 auto;
+                transform: translateZ(0);
+                -webkit-text-size-adjust: none;
+            }
+            .backdrop,.backdrop2 {
+                position: absolute;
+                z-index: 1;
+                border: 2px solid #685972;
+                background-color: #fff;
+                overflow: auto;
+                pointer-events: none;
+                transition: transform 1s;
+                padding: 10px;
+            }
+            .highlights, .highlights2 {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                color: transparent;
+            }
+            textarea, .txtarea input {
+                display: block;
+                position: absolute;
+                z-index: 2;
+                margin: 0;
+                border: 2px solid #74637f;
+                border-radius: 0;
+                color: #444;
+                background-color: transparent;
+                overflow: auto;
+                resize: none;
+                transition: transform 1s;
+            }
+            button {
+                display: block;
+                width: 300px;
+                margin: 30px auto 0;
+                padding: 10px;
+                border: none;
+                border-radius: 6px;
+                color: #fff;
+                background-color: #74637f;
+                font: 18px 'Opens Sans', sans-serif;
+                letter-spacing: 1px;
+                appearance: none;
+                cursor: pointer;
+            }
+            .perspective .backdrop,.perspective .backdrop2 {
+                transform:
+                        perspective(1500px)
+                        translateX(-125px)
+                        rotateY(45deg)
+                        scale(.9);
+            }
+            .perspective textarea, .perspective .txtarea input {
+                transform:
+                        perspective(1500px)
+                        translateX(155px)
+                        rotateY(45deg)
+                        scale(1.1);
+            }
+            textarea:focus, button:focus, .txtarea input:focus {
+                outline: none;
+                box-shadow: 0 0 0 2px #c6aada;
+            }
+            #result_chars,#result_words{
+                width: 30%;
+                margin: auto;
+                text-align: center;
+                float: left;
+            }
+            #result_words{
+                margin-left: 20px;
+                margin-bottom: 20px;
+            }
+            #result_chars p, #result_words p{
+                background: #617F74;
+                color: #fff;
+                padding: 10px;
+                margin-top: 50px;
+                border-radius: 6px;
+            }
+            .txtarea{
+                margin-left: 10%;
+            }
+            .options,.txtarea,.cbox,.clbl,#chars,.first,.wrd{
+                float: left;
+            }
+            .clbl{
+                margin-left: 10px;
+            }
+            #chars{
+                margin-left: 5%;
+            }
+            .first{
+                width: 80%;
+            }
+            .wrd{
+                margin-left: 40px;
+                width: 20%;
+                margin-bottom: 5px;
+            }
+            .chr{
+                margin-bottom: 5px;
+            }
+            .txtarea p{
+                margin-top: 40px;
+                margin-bottom: 10px;
+            }
+            /*Checkbox*/
+            .switch {
+                display: inline-block;
+                width: 40px;
+                height: 20px;
+                padding: 4px;
+                border-radius: 20px;
+                background: #ccc;
+                vertical-align: middle;
+                position: relative;
+                cursor: pointer;
+                user-select: none;
+                transition: background 350ms ease;
+            }
+            .switch:before,.switch:after {
+                content: "";
+                display: block;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                position: absolute;
+                top: 50%;
+                transition: all 350ms cubic-bezier(0,.95,.38,.98),
+                background 150ms ease;
+            }
+            .switch:before {
+                 background: rgba(128, 128, 128, 0.075);
+                 transform: translate3d(0, -50%, 0) scale(0);
+            }
+            .switch:after {
+                 background: grey;
+                 transform: translate3d(0, -50%, 0);
+            }
+            .switch:active:before {
+                 transform: translate3d(0, -50%, 0) scale(3);
+            }
+            input:checked + .switch {
+                background: #d0efa8;
+            }
+            input:checked + .switch:before {
+                 background: rgba(131, 177, 84, 0.075);
+                 transform: translate3d(100%, -50%, 0) scale(1);
+            }
+            input:checked + .switch:after{
+                 background: #83b154;
+                 transform: translate3d(100%, -50%, 0);
+            }
+            input:checked + .switch:active:before {
+                 background: rgba(131, 177, 84, 0.075);
+                 transform: translate3d(100%, -50%, 0) scale(3);
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="first">
+            <div class="options">
+                <p>Include to analysis:</p>
+
+                <div class="cbox"><input onclick="setCookie(jQuery(this).attr('id'), jQuery(this).is(':checked'));" id="o_cyr" type="checkbox" hidden /><label for="o_cyr" class="switch"></label></div>
+                <div class="clbl">Cyrillic chars</div>
+                <div class="clearfix"></div>
+
+                <div class="cbox"><input onclick="setCookie(jQuery(this).attr('id'), jQuery(this).is(':checked'));" id="o_lat" type="checkbox" hidden /><label for="o_lat" class="switch"></label></div>
+                <div class="clbl">Latin chars</div>
+                <div class="clearfix"></div>
+
+                <div class="cbox"><input onclick="setCookie(jQuery(this).attr('id'), jQuery(this).is(':checked'));" id="o_spa" type="checkbox" hidden /><label for="o_spa" class="switch"></label></div>
+                <div class="clbl">Spaces</div>
+                <div class="clearfix"></div>
+
+                <div class="cbox"><input onclick="setCookie(jQuery(this).attr('id'), jQuery(this).is(':checked'));" id="o_sym" type="checkbox" hidden /><label for="o_sym" class="switch"></label></div>
+                <div class="clbl">Symbols</div>
+                <div class="clearfix"></div>
+
+                <button id="butt" onclick="doentropy();">Evaluate</button>
+            </div>
+
+            <div class="txtarea">
+                <div class="container">
+                    <div class="backdrop">
+                        <div class="highlights"></div>
+                    </div>
+                    <textarea id="text">Add text</textarea>
+                </div>
+                <div><p>Or url</p></div>
+                <div class="container2">
+                    <div class="backdrop2">
+                        <div class="highlights2"></div>
+                    </div>
+                    <input id="url" value="http://" />
+                </div>
+            </div>
+
+            <div class="clearfix"></div>
+            <div id="result_chars"></div>
+            <div id="result_words"></div>
+            <div class="clearfix"></div>
+
+            <div id="words"></div>
+        </div>
+        <div id="chars"></div>
+
+        <script>
+            /*Checkboxes-->*/
+            /*Write settings to cookies*/
+            function setCookie(name, value) {
+                var d = new Date;
+                d.setTime(d.getTime() + 24*60*60*1000*2);
+                document.cookie = name + "=" + value  + ";path=/;expires=" + d.toGMTString();
+            }
+            /*Read settings from cookies*/
+            function getCookie(name) {
+                var matches = document.cookie.match(new RegExp(
+                    "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+                ));
+                if(!!matches) {
+                    if (decodeURIComponent(matches[1]) === 'true') {
+                        jQuery('#' + name).attr('checked', true);
+                    } else {
+                        jQuery('#' + name).attr('checked', false);
+                    }
+                }
+            }
+
+            getCookie('o_cyr');
+            getCookie('o_lat');
+            getCookie('o_spa');
+            getCookie('o_sym');
+            /*<--Checkboxes*/
+
+            /*Form-->*/
+            var $container = $('.container');
+            var $container2 = $('.container2');
+            var $backdrop = $('.backdrop');
+            var $highlights = $('.highlights');
+            var $textarea = $('textarea');
+            var $toggle = $('button');
+            /*handle browser bugs*/
+            var ua = window.navigator.userAgent.toLowerCase();
+            var isIE = !!ua.match(/msie|trident\/7|edge/);
+            var isWinPhone = ua.indexOf('windows phone') !== -1;
+            var isIOS = !isWinPhone && !!ua.match(/ipad|iphone|ipod/);
+
+            function handleInput() {
+                var text = $textarea.val();
+            }
+
+            function handleScroll() {
+                var scrollTop = $textarea.scrollTop();
+                $backdrop.scrollTop(scrollTop);
+
+                var scrollLeft = $textarea.scrollLeft();
+                $backdrop.scrollLeft(scrollLeft);
+            }
+
+            function fixIOS() {
+                // iOS adds 3px of (unremovable) padding to the left and right of a textarea, so adjust highlights div to match
+                $highlights.css({
+                    'padding-left': '+=3px',
+                    'padding-right': '+=3px'
+                });
+            }
+
+            function bindEvents() {
+                $textarea.on({
+                    'input': handleInput,
+                    'scroll': handleScroll
+                });
+            }
+
+            if (isIOS) {
+                fixIOS();
+            }
+            bindEvents();
+            handleInput();
+            /*<--Form*/
+
+            /*Process text input-->*/
+            function deconstruct(text,o_cyr,o_lat,o_spa,o_sym){
+                text = text.replace(/(\r\n\t|\n|\r\t)/gm,"");
+                text = text.replace(/\s\s+/g, ' ');
+                //Delete Cyrillic characters
+                if(o_cyr === false){
+                    text = text.replace(/[\u0430-\u044f\u0451]/ig, '');
+                }
+                //Delete Latin characters
+                if(o_lat === false){
+                    text = text.replace(/[a-z]/ig, '');
+                }
+                //Delete Spaces
+                if(o_spa === false){
+                    text = text.replace(/\s/g, '');
+                }
+                //Delete Special characters
+                if(o_sym === false){
+                    text = text.replace(/[^a-z\u0400-\u04FF\s]/gi,'');
+                }
+                text = text.trim();
+                //Build object
+                var chars = [];
+                for(var ch = 0;ch<text.length;ch++){
+                    if(!chars.hasOwnProperty(text[ch])){
+                        chars[text[ch]] = 1;
+                    } else {
+                        chars[text[ch]] = chars[text[ch]] + 1;
+                    }
+                }
+                return chars;
+            }
+            /*<--Process text input*/
+
+            /*Slice on words-->*/
+            function slicewords(text,o_cyr,o_lat,o_sym){
+                if(o_cyr === false){
+                    text = text.replace(/[\u0430-\u044f\u0451]/ig, ' ');
+                }
+                if(o_lat === false){
+                    text = text.replace(/[a-z]/ig, ' ');
+                }
+                if(o_sym === false){
+                    text = text.replace(/[^a-z\u0400-\u04FF\s]/ig,' ');
+                }
+                text = text.replace(/\s\s+/g, ' ').trim();
+                var words = [];
+                var wordsarray = text.split(" ");
+                for(var w = 0;w<wordsarray.length;w++){
+                    if(!words.hasOwnProperty(wordsarray[w])){
+                        words[wordsarray[w]] = 1;
+                    } else {
+                        words[wordsarray[w]] = words[wordsarray[w]] + 1;
+                    }
+                }
+                return words;
+            }
+            /*<--Slice on words*/
+
+            /*Main function-->*/
+            function doentropy() {
+                var button = jQuery('#butt');
+                if(button.text() === 'Again'){
+                    button.text('Evaluate');
+                    jQuery('#result_chars').css('display','none');
+                    jQuery('#result_words').css('display','none');
+                    jQuery('#chars').css('display','none');
+                    jQuery('#words').css('display','none');
+                } else {
+                    var text_val = jQuery('#text').val().toLowerCase().replace(/(\r\n\t|\n|\r\t)/gm,"");
+                    var url_val = jQuery('#url').val().trim();
+                    if (url_val === 'http://' || url_val === ''){
+                        Process(text_val);
+                    } else {
+                        $.ajax({
+                            url: 'scraper.php',
+                            type: "POST",
+                            dataType:'json',
+                            data: ({url: url_val}),
+                            success: function(data){
+                                console.log(data);
+                                if(data === 'no_url'){
+                                    alert("Please, enter correct url.");
+                                } else if(data === 'bad_url'){
+                                    alert("Incorrect url!");
+                                } else if(data === 'bad_response'){
+                                    alert("Incorrect url or some restrictions for scraping on the target page.");
+                                } else if(data === 'no_tags'){
+                                    alert("There is no <body> or <main> tags on the page.");
+                                } else {
+                                    Process(data.toLowerCase().replace(/(\r\n\t|\n|\r\t)/gm,""));
+                                }
+                            },
+                            error: function(data){
+                                console.log(data['responseText']);
+                                if(data['responseText'] === 'bad_url'){
+                                    alert("Incorrect url!");
+                                } else if(data['responseText'] === 'bad_response'){
+                                    alert("Incorrect url or some restrictions for scraping on the target page.");
+                                } else {
+                                    alert("Something went wrong.");
+                                }
+                            }
+                        });
+
+                    }
+                    button.text('Again');
+                }
+            }
+            /*<--Main function*/
+
+            function Process(textinput) {
+                var o_cyr = jQuery('#o_cyr').is(':checked');
+                var o_lat = jQuery('#o_lat').is(':checked');
+                var o_spa = jQuery('#o_spa').is(':checked');
+                var o_sym = jQuery('#o_sym').is(':checked');
+
+                /*Construct objects*/
+                var chars = deconstruct(textinput,o_cyr,o_lat,o_spa,o_sym);
+                var words = slicewords(textinput,o_cyr,o_lat,o_sym);
+
+                /*Sort objects by keys for better display*/
+                var sortObjectByKey = function(obj){
+                    var keys = [];
+                    var sorted_obj = {};
+                    for(var key in obj){
+                        if(obj.hasOwnProperty(key)){
+                            keys.push(key);
+                        }
+                    }
+                    keys.sort();
+                    jQuery.each(keys, function(i, key){
+                        sorted_obj[key] = obj[key];
+                    });
+                    return sorted_obj;
+                };
+                chars = sortObjectByKey(chars);
+
+                /*CHARACTERS*/
+                var char;
+                var sum = 0;
+                for( var el in chars ) {
+                    if( chars.hasOwnProperty( el ) ) {
+                        sum += parseFloat( chars[el] );
+                    }
+                }
+                var charscontent = '';
+                var shannon = 0;
+                var percent;
+                for (var ch in chars){
+                    if(chars.hasOwnProperty(ch)){
+                        percent = chars[ch]/sum;
+                        shannon += percent*Math.log2(percent);
+                        if(ch === " "){
+                            char = 'Space';
+                        } else {
+                            char = ch;
+                        }
+                        charscontent += '<div class="chr">' +
+                            '<span class="c">'+char+'</span>' +
+                            '<span class="h"> - '+chars[ch]+'</span>' +
+                            '<span class="r"> ('+(percent*100).toFixed(1)+'%)</span></div>';
+                    }
+                }
+                jQuery('#chars').html(charscontent).css('display','block');
+                jQuery('#result_chars').html('<p>By characters: '+(-1*shannon).toFixed(2)+'</p>').css('display','block');
+
+                /*WORDS*/
+                sum = 0;
+                for( var elm in words ) {
+                    if( words.hasOwnProperty( elm ) ) {
+                        sum += parseFloat( words[elm] );
+                    }
+                }
+                words = sortObjectByKey(words);
+                var wordscontent = '';
+                shannon = 0;
+                percent = 0;
+                for (var w in words){
+                    if(words.hasOwnProperty(w)){
+                        percent = words[w]/sum;
+                        shannon += percent*Math.log2(percent);
+                        wordscontent += '<div class="wrd">' +
+                            '<span class="c">'+w+'</span>' +
+                            '<span class="h"> - '+words[w]+'</span>' +
+                            '<span class="r"> ('+(percent*100).toFixed(1)+'%)</span></div>';
+                    }
+                }
+                jQuery('#words').html(wordscontent).css('display','block');
+                jQuery('#result_words').html('<p>By words: '+(-1*shannon).toFixed(2)+'</p>').css('display','block');
+            }
+        </script>
+    </body>
+</html>
